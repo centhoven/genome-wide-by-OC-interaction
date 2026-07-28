@@ -1,0 +1,643 @@
+# This script uses the files resulting from '04-pruning' to run GWDIS and GWAS
+
+# First for snp1-2000 of chr 1
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+
+dx run swiss-army-knife \
+  -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+  -iin="${data_file_dir}/chr1_251031_pruned.bed" \
+  -iin="${data_file_dir}/chr1_251031_pruned.fam" \
+  -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+  -icmd="export SNP_START=1;
+         export SNP_END=2000;
+         export BEDFILE=/mnt/project/Data/chr1_251031_pruned.bed;
+         export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+         Rscript run_GWDIS_mclapply.r" \
+  --destination "${data_file_dir}" \
+  --instance-type "mem3_ssd1_v2_x8" \
+  --priority high \
+  --brief --yes
+
+# Then for snp 2001-39000 of chr 1
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+
+# SNP ranges: 2001 to 39000 in batches of 2000
+for start in $(seq 2001 2000 39001); do
+    end=$(( start + 1999 ))
+    if [ $end -gt 39000 ]; then
+        end=39000
+    fi
+
+    echo "Submitting chr1: SNPs ${start}-${end}"
+
+    dx run swiss-army-knife \
+      -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+      -iin="${data_file_dir}/chr1_251031_pruned.bed" \
+      -iin="${data_file_dir}/chr1_251031_pruned.fam" \
+      -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+      -icmd="export SNP_START=${start};
+             export SNP_END=${end};
+             export BEDFILE=/mnt/project/Data/chr1_251031_pruned.bed;
+             export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+             Rscript run_GWDIS_mclapply.r" \
+      --destination "${data_file_dir}" \
+      --instance-type "mem3_ssd1_v2_x8" \
+      --priority high \
+      --brief --yes
+
+done
+
+# Now for chr 2 to 4 (no of snps max 40,000)
+
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+
+# Loop over chromosomes 2 to 4
+for chr in {2..4}; do
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 40001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+done
+
+
+# Now for chr 5 to 7 (no of snps max 30,063)
+
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+
+# Loop over chromosomes 5 to 7
+for chr in {5..7}; do
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 30001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+done
+
+# Now for chr 8 and 9 (no of snps max 25,579)
+
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+
+# Loop over chromosomes 8 to 9
+for chr in {8..9}; do
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 24001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+done
+
+
+# Now for chr 10: no of snps max 25,564)
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="10"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 24001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+
+# Now for chr 11: no of snps max 23,551)
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="11"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 22001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+
+# Now for chr 12: no of snps max 24,399, NOTE last 399 snps were already done!
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="12"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 22001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 13: no of snps max 18,060, NOTE last 60 snps were already done!
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="13"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 16001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+
+
+# Now for chr 13: no of snps max 18,060, NOTE last 60 snps were already done!
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="13"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 16001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 14: no of snps max 16,760
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="14"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 16001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+
+# Now for chr 14: first 2000 (didn't work previously)
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="14"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=1;
+                 export SNP_END=2000;
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+# Now for chr 15: no of snps max 16,148, NOTE last 148 were already done
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="15"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 14001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 16: no of snps max 18,748
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="16"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 18001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 17: no of snps max 17,119
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="17"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 16001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 18: no of snps max 16,123, NOTE that last 123 snps were already done!
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="18"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 14001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 19: no of snps max 15,161
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="19"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 14001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 20: no of snps max 13,730
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="20"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 12001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 21: no of snps max 7,775
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="21"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 6001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 22: no of snps max 9,274
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="22"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 8001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done
+
+# Now for chr 23: no of snps max 16,477
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+chr="23"
+
+    # Loop in batches of 2000 SNPs (safe upper bound)
+    for start in $(seq 1 2000 16001); do
+        end=$(( start + 1999 ))
+
+        echo "Submitting chr${chr}: SNPs ${start}-${end}"
+
+        dx run swiss-army-knife \
+          -iin="${data_file_dir}/run_GWDIS_mclapply.r" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.bed" \
+          -iin="${data_file_dir}/chr${chr}_251031_pruned.fam" \
+          -iin="${txt_file_dir}/pheno_final_imputed_cox.csv" \
+          -icmd="export SNP_START=${start};
+                 export SNP_END=${end};
+                 export BEDFILE=/mnt/project/Data/chr${chr}_251031_pruned.bed;
+                 export PHENOFILE=/mnt/project/Cohort/pheno_final_imputed_cox.csv;
+                 Rscript run_GWDIS_mclapply.r" \
+          --destination "${data_file_dir}" \
+          --instance-type "mem3_ssd1_v2_x8" \
+          --priority high \
+          --brief --yes
+
+    done

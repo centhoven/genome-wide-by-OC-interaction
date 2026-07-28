@@ -1,0 +1,43 @@
+# This script creates a file with all frequencies
+
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+i="23"
+
+run_plink_freq="
+plink2 \
+  --bfile '/mnt/project/Data/chr${i}_251031_pruned' \
+  --freq \
+  --out chr${i}_251031_pruned_freq"
+
+dx run swiss-army-knife \
+  -iin="${data_file_dir}/chr${i}_251031_pruned.bed" \
+  -iin="${data_file_dir}/chr${i}_251031_pruned.fam" \
+  -iin="${data_file_dir}/chr${i}_251031_pruned.bim" \
+  -icmd="${run_plink_freq}" \
+  --instance-type "mem1_ssd1_v2_x4" \
+  --priority high \
+  --destination="${data_file_dir}" \
+  --brief --yes
+
+
+
+for i in {1..22}; do
+run_plink_freq="
+plink2 \
+  --bfile '/mnt/project/Data/chr${i}_251031_pruned' \
+  --freq \
+  --out chr${i}_251031_pruned_freq"
+
+dx run swiss-army-knife \
+  -iin="${data_file_dir}/chr${i}_251031_pruned.bed" \
+  -iin="${data_file_dir}/chr${i}_251031_pruned.fam" \
+  -iin="${data_file_dir}/chr${i}_251031_pruned.bim" \
+  -icmd="${run_plink_freq}" \
+  --instance-type "mem1_ssd1_v2_x4" \
+  --priority high \
+  --destination="${data_file_dir}" \
+  --brief --yes
+done

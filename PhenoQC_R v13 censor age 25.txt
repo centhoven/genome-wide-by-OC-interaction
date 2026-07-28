@@ -1,0 +1,537 @@
+install.packages("psych")
+library(psych)
+library(dplyr)
+
+# Get file with pheno data
+df <- read.csv("/mnt/project/Cohort/pheno_all.csv") # n=501,931
+
+####################################################################
+##            Create variables and change names                   ##
+####################################################################
+
+# Clean variable values
+df <- df %>%
+  mutate(
+    sex = case_when( # Self-reported sex
+      p31 == "Male" ~ 0,
+      p31 == "Female" ~ 1),
+    gen_sex = case_when( # Genetic sex
+      p22001 == "Male" ~ 0,
+      p22001 == "Female" ~ 1),
+    ethni = case_when( # Genetic ethnic grouping 
+      p22006 == "Caucasian" ~ 1,
+      p22006 == "" ~ 0),
+    out_het = case_when( # Outliers for heterozygosity 
+      p22027 == "Yes" ~ 1,
+      p22027 == "" ~ 0),
+    yob = as.numeric(p34), # Year of birth
+    deprivation = as.numeric(p22189), # Deprivation index
+    array = as.factor(case_when(
+      grepl("^Batch", p22000) ~ 0, # 0 = Axiom
+      grepl("^UKB", p22000) ~ 1)),  # 1 = BiLEVE
+    pc1 = as.numeric(p22009_a1), # Principal Components 1 to 8
+    pc2 = as.numeric(p22009_a2),
+    pc3 = as.numeric(p22009_a3),
+    pc4 = as.numeric(p22009_a4),
+    pc5 = as.numeric(p22009_a5),
+    pc6 = as.numeric(p22009_a6),
+    pc7 = as.numeric(p22009_a7),
+    pc8 = as.numeric(p22009_a8))
+
+# OC use
+# Change 'Do not know' and 'Prefer not to answer' to NA
+df$OCuse_i0 <- ifelse(df$p2784_i0== "Yes", 1, ifelse(df$p2784_i0== "No", 0, NA)) 
+df$OCuse_i1 <- ifelse(df$p2784_i1== "Yes", 1, ifelse(df$p2784_i1== "No", 0, NA))
+df$OCuse_i2 <- ifelse(df$p2784_i2== "Yes", 1, ifelse(df$p2784_i2== "No", 0, NA))
+df$OCuse_i3 <- ifelse(df$p2784_i3== "Yes", 1, ifelse(df$p2784_i3== "No", 0, NA))
+# Create one variable
+df$OCuse <- as.factor(ifelse(!is.na(df$OCuse_i0), df$OCuse_i0,
+                             ifelse(!is.na(df$OCuse_i1), df$OCuse_i1,
+                                    ifelse(!is.na(df$OCuse_i2), df$OCuse_i2,
+                                           ifelse(!is.na(df$OCuse_i3), df$OCuse_i3, NA)))))
+table(df$OCuse)  
+
+# Age at OC use
+# Change 'Do not know' and 'Prefer not to answer' to NA
+df$age_OC_i0 <- as.numeric(ifelse(df$p2794_i0=="Do not know" | df$p2794_i0=="Prefer not to answer" | df$p2794_i0=="", NA, df$p2794_i0))
+df$age_OC_i1 <- as.numeric(ifelse(df$p2794_i1=="Do not know" | df$p2794_i1=="Prefer not to answer" | df$p2794_i1=="", NA, df$p2794_i1))
+df$age_OC_i2 <- as.numeric(ifelse(df$p2794_i2=="Do not know" | df$p2794_i2=="Prefer not to answer" | df$p2794_i2=="", NA, df$p2794_i2))
+df$age_OC_i3 <- as.numeric(ifelse(df$p2794_i3=="Do not know" | df$p2794_i3=="Prefer not to answer" | df$p2794_i3=="", NA, df$p2794_i3))
+
+# Create one variable
+df$age_OC <- as.numeric(ifelse(!is.na(df$OCuse_i0), df$age_OC_i0,
+                               ifelse(!is.na(df$OCuse_i1), df$age_OC_i1,
+                                      ifelse(!is.na(df$OCuse_i2), df$age_OC_i2,
+                                             ifelse(!is.na(df$OCuse_i3), df$age_OC_i3, NA)))))
+describe(df$age_OC)
+table(df$OCuse,df$age_OC, useNA = "always")
+
+# Age at first depression
+df$date_depression <- as.numeric(format(as.Date(df$p130894, format = "%Y-%m-%d"), "%Y"))
+df$age_depression <- as.numeric(df$date_depression - as.numeric(df$yob))
+df$depression <- ifelse(is.na(df$age_depression), 0, 1) 
+
+# Age at first acne
+df$date_acne <- as.numeric(format(as.Date(df$p131790, format = "%Y-%m-%d"), "%Y"))
+df$age_acne <- as.numeric(df$date_acne - as.numeric(df$yob))
+
+# Age at menarche
+# Change 'Do not know' and 'Prefer not to answer' to NA
+df$age_menarche_i0 <- as.numeric(ifelse(df$p2714_i0=="Do not know" | df$p2714_i0=="Prefer not to answer" | df$p2714_i0=="", NA, df$p2714_i0))
+df$age_menarche_i1 <- as.numeric(ifelse(df$p2714_i1=="Do not know" | df$p2714_i1=="Prefer not to answer" | df$p2714_i1=="", NA, df$p2714_i1))
+df$age_menarche_i2 <- as.numeric(ifelse(df$p2714_i2=="Do not know" | df$p2714_i2=="Prefer not to answer" | df$p2714_i2=="", NA, df$p2714_i2))
+df$age_menarche_i3 <- as.numeric(ifelse(df$p2714_i3=="Do not know" | df$p2714_i3=="Prefer not to answer" | df$p2714_i3=="", NA, df$p2714_i3))
+# Create one variable
+df$age_menarche <- as.numeric(ifelse(!is.na(df$age_menarche_i0), df$age_menarche_i0,
+                                     ifelse(!is.na(df$age_menarche_i1), df$age_menarche_i1,
+                                            ifelse(!is.na(df$age_menarche_i2), df$age_menarche_i2,
+                                                   ifelse(!is.na(df$age_menarche_i3), df$age_menarche_i3, NA)))))
+describe(df$age_menarche)
+table(df$age_menarche, useNA = "always")
+
+# Age at sexual debut
+# Change 'Do not know' and 'Prefer not to answer' to NA, but keep 'Never had sex'
+df$age_sexualdebut_i0 <- ifelse(df$p2139_i0=="Do not know" | df$p2139_i0=="Prefer not to answer" | df$p2139_i0=="", NA, df$p2139_i0)
+df$age_sexualdebut_i1 <- ifelse(df$p2139_i1=="Do not know" | df$p2139_i1=="Prefer not to answer" | df$p2139_i1=="", NA, df$p2139_i1)
+df$age_sexualdebut_i2 <- ifelse(df$p2139_i2=="Do not know" | df$p2139_i2=="Prefer not to answer" | df$p2139_i2=="", NA, df$p2139_i2)
+df$age_sexualdebut_i3 <- ifelse(df$p2139_i3=="Do not know" | df$p2139_i3=="Prefer not to answer" | df$p2139_i3=="", NA, df$p2139_i3)
+# Create one variable
+df$age_sexualdebut <- ifelse(!is.na(df$age_sexualdebut_i0), df$age_sexualdebut_i0,
+                             ifelse(!is.na(df$age_sexualdebut_i1), df$age_sexualdebut_i1,
+                                    ifelse(!is.na(df$age_sexualdebut_i2), df$age_sexualdebut_i2,
+                                           ifelse(!is.na(df$age_sexualdebut_i3), df$age_sexualdebut_i3, NA))))
+table(df$age_sexualdebut, useNA = "always")
+
+
+# Ovarian dysfunction
+df$ovarydys <- as.factor(ifelse(df$p130736 =="", 0, 1))
+df$date_ovarydys <- as.numeric(format(as.Date(df$p130736, format = "%Y-%m-%d"), "%Y"))
+df$age_ovarydys <- as.numeric(df$date_ovarydys - as.numeric(df$p34))
+
+# Endometriosis
+df$endom <- as.factor(ifelse(df$p132122 =="", 0, 1))
+df$date_endom <- as.numeric(format(as.Date(df$p132122, format = "%Y-%m-%d"), "%Y"))
+df$age_endom <- as.numeric(df$date_endom - as.numeric(df$p34))
+
+# Dysmenorrhea
+df$dysmen <- as.factor(ifelse(df$p132146 =="", 0, 1))
+df$date_dysmen <- as.numeric(format(as.Date(df$p132146, format = "%Y-%m-%d"), "%Y"))
+df$age_dysmen <- as.numeric(df$date_dysmen - as.numeric(df$p34))
+
+# Source depression diagnosis
+df$source_depression <- ifelse(df$p130895=="", NA, df$p130895)
+
+# Age menopause
+# Change 'Do not know' and 'Prefer not to answer' to NA
+df$age_menopause_i0 <- as.numeric(ifelse(df$p3581_i0=="Do not know" | df$p3581_i0=="Prefer not to answer" | df$p3581_i0=="", NA, df$p3581_i0))
+df$age_menopause_i1 <- as.numeric(ifelse(df$p3581_i1=="Do not know" | df$p3581_i1=="Prefer not to answer" | df$p3581_i1=="", NA, df$p3581_i1))
+df$age_menopause_i2 <- as.numeric(ifelse(df$p3581_i2=="Do not know" | df$p3581_i2=="Prefer not to answer" | df$p3581_i2=="", NA, df$p3581_i2))
+df$age_menopause_i3 <- as.numeric(ifelse(df$p3581_i3=="Do not know" | df$p3581_i3=="Prefer not to answer" | df$p3581_i3=="", NA, df$p3581_i3))
+# Create one variable 
+df <- df %>%
+  mutate(age_menopause = coalesce(age_menopause_i0, age_menopause_i1, age_menopause_i2, age_menopause_i3))
+describe(df$age_menopause) 
+
+# Age hysterectomy
+# Change 'Do not know' and 'Prefer not to answer' to NA
+df$age_hysterectomy_i0 <- as.numeric(ifelse(df$p2824_i0=="Do not know" | df$p2824_i0=="Prefer not to answer" | df$p2824_i0=="", NA, df$p2824_i0))
+df$age_hysterectomy_i1 <- as.numeric(ifelse(df$p2824_i1=="Do not know" | df$p2824_i1=="Prefer not to answer" | df$p2824_i1=="", NA, df$p2824_i1))
+df$age_hysterectomy_i2 <- as.numeric(ifelse(df$p2824_i2=="Do not know" | df$p2824_i2=="Prefer not to answer" | df$p2824_i2=="", NA, df$p2824_i2))
+df$age_hysterectomy_i3 <- as.numeric(ifelse(df$p2824_i3=="Do not know" | df$p2824_i3=="Prefer not to answer" | df$p2824_i3=="", NA, df$p2824_i3))
+# Create one variable 
+df <- df %>%
+  mutate(age_hysterectomy = coalesce(age_hysterectomy_i0, age_hysterectomy_i1, age_hysterectomy_i2, age_hysterectomy_i3))
+describe(df$age_hysterectomy)
+
+# Age oophorectomy 
+# Change 'Do not know' and 'Prefer not to answer' to NA
+df$age_oophorectomy_i0 <- as.numeric(ifelse(df$p3882_i0=="Do not know" | df$p3882_i0=="Prefer not to answer" | df$p3882_i0=="", NA, df$p3882_i0))
+df$age_oophorectomy_i1 <- as.numeric(ifelse(df$p3882_i1=="Do not know" | df$p3882_i1=="Prefer not to answer" | df$p3882_i1=="", NA, df$p3882_i1))
+df$age_oophorectomy_i2 <- as.numeric(ifelse(df$p3882_i2=="Do not know" | df$p3882_i2=="Prefer not to answer" | df$p3882_i2=="", NA, df$p3882_i2))
+df$age_oophorectomy_i3 <- as.numeric(ifelse(df$p3882_i3=="Do not know" | df$p3882_i3=="Prefer not to answer" | df$p3882_i3=="", NA, df$p3882_i3))
+# Create one variable 
+df <- df %>%
+  mutate(age_oophorectomy = coalesce(age_oophorectomy_i0, age_oophorectomy_i1, age_oophorectomy_i2, age_oophorectomy_i3))
+describe(df$age_oophorectomy)
+
+# Age at first live birth multiparous women
+# Change 'Do not remember' and 'Prefer not to answer' to NA
+df$age_multibirth_i0 <- as.numeric(ifelse(df$p2754_i0=="Do not remember" | df$p2754_i0=="Prefer not to answer" | df$p2754_i0=="", NA, df$p2754_i0))
+df$age_multibirth_i1 <- as.numeric(ifelse(df$p2754_i1=="Do not remember" | df$p2754_i1=="Prefer not to answer" | df$p2754_i1=="", NA, df$p2754_i1))
+df$age_multibirth_i2 <- as.numeric(ifelse(df$p2754_i2=="Do not remember" | df$p2754_i2=="Prefer not to answer" | df$p2754_i2=="", NA, df$p2754_i2))
+df$age_multibirth_i3 <- as.numeric(ifelse(df$p2754_i3=="Do not remember" | df$p2754_i3=="Prefer not to answer" | df$p2754_i3=="", NA, df$p2754_i3))
+
+# Age of primiparous women at birth of child
+# Change 'Do not remember' and 'Prefer not to answer' to NA
+df$age_primibirth_i0 <- as.numeric(ifelse(df$p3872_i0=="Do not remember" | df$p3872_i0=="Prefer not to answer" | df$p3872_i0=="", NA, df$p3872_i0))
+df$age_primibirth_i1 <- as.numeric(ifelse(df$p3872_i1=="Do not remember" | df$p3872_i1=="Prefer not to answer" | df$p3872_i1=="", NA, df$p3872_i1))
+df$age_primibirth_i2 <- as.numeric(ifelse(df$p3872_i2=="Do not remember" | df$p3872_i2=="Prefer not to answer" | df$p3872_i2=="", NA, df$p3872_i2))
+df$age_primibirth_i3 <- as.numeric(ifelse(df$p3872_i3=="Do not remember" | df$p3872_i3=="Prefer not to answer" | df$p3872_i3=="", NA, df$p3872_i3))
+
+# Age at first birth
+df$age_birth_i0 <- ifelse(is.na(df$age_multibirth_i0), df$age_primibirth_i0, df$age_multibirth_i0)
+df$age_birth_i1 <- ifelse(is.na(df$age_multibirth_i1), df$age_primibirth_i1, df$age_multibirth_i1)
+df$age_birth_i2 <- ifelse(is.na(df$age_multibirth_i2), df$age_primibirth_i2, df$age_multibirth_i2)
+df$age_birth_i3 <- ifelse(is.na(df$age_multibirth_i3), df$age_primibirth_i3, df$age_multibirth_i3)
+
+# Create one variable
+df$age_birth <- as.numeric(ifelse(!is.na(df$age_birth_i0), df$age_birth_i0,
+                                  ifelse(!is.na(df$age_birth_i1), df$age_birth_i1,
+                                         ifelse(!is.na(df$age_birth_i2), df$age_birth_i2,
+                                                ifelse(!is.na(df$age_birth_i3), df$age_birth_i3, NA)))))
+df$age_pregnancy <- df$age_birth - 1
+describe(df$age_pregnancy)
+
+# WGS quality requirements achieved
+df$wgs_qc_i0 <- ifelse(df$p32064_i0=="", NA, df$p32064_i0)
+df$wgs_qc_i1 <- ifelse(df$p32064_i1=="", NA, df$p32064_i1)
+df$wgs_qc_i2 <- ifelse(df$p32064_i2=="", NA, df$p32064_i2)
+df$wgs_qc_i3 <- ifelse(df$p32064_i3=="", NA, df$p32064_i3)
+df$wgs_qc <- as.factor(ifelse(!is.na(df$wgs_qc_i0), df$wgs_qc_i0,
+                              ifelse(!is.na(df$wgs_qc_i1), df$wgs_qc_i1,
+                                     ifelse(!is.na(df$wgs_qc_i2), df$wgs_qc_i2,
+                                            ifelse(!is.na(df$wgs_qc_i3), df$wgs_qc_i3, NA)))))
+
+####################################################################
+##                          Filter cohort                         ##
+####################################################################
+
+# Read .psam file indicating eid of participants with WGS data
+wgs_eid <- read.table("/mnt/project/Cohort/wgs_eid.psam", # n=491001
+                      header = F, 
+                      sep = "", 
+                      fill = T)
+
+df2 <- merge(df, wgs_eid, by.x = "eid", by.y = "V1", all.x = T)
+
+# Exclude participants without WGS data
+df3 <- df2 %>%
+  filter(!is.na(V2) & !is.na(array) & wgs_qc=="Yes") # n=484,871
+
+# Exclude male participants
+df4 <- df3[df3$sex==1,] # n=262,914
+
+# Exclude sex mismatch
+df5 <- df4[df4$V5==2,] # n=262,832
+
+# Exclude not 'White British'
+df6 <- df5[df5$p22006=="Caucasian",] # n=219,882
+
+# Exclude outliers for heterozygosity
+df7 <- df6[df6$p22027=="",] # n=219,512
+
+# Exclude participants with missing data on OC use and age at OC use
+df8 <- df7 %>%
+  filter(OCuse == 0 | (OCuse == 1 & !is.na(age_OC))) # n=212,780
+
+####################################################################
+##                Keep only one related individual                ##
+####################################################################
+devtools::install_github("kenhanscombe/ukbtools", dependencies = TRUE)
+library(ukbtools)
+
+# Get file with relatedness info
+df_rel <- read.delim("/mnt/project/Bulk/Genotype Results/Genotype calls/ukb_rel.dat", header= T, sep = " ")
+head(df_rel)
+
+# Create character vector with all eids from df_OC_dep
+eids_of_interest <- df8$eid
+
+# Use R function to get list of eids to remove in order to keep only one related individual
+# See https://www.rdocumentation.org/packages/ukbtools/versions/0.11.3/topics/ukb_gen_samples_to_remove for more info
+eids_to_remove <- ukb_gen_samples_to_remove(df_rel, eids_of_interest, cutoff = 0.0884)
+
+# Create dataframe with eids to remove
+df_to_remove <- as.data.frame(eids_to_remove) # n=10371
+
+# Remove eids from df7
+total <- df8[!df8$eid %in% df_to_remove$eids_to_remove,] # n=202,409
+
+
+####################################################################
+##             Create file with final variables                   ##
+####################################################################
+# Create time/censoring variable indicating the first occurrence of depression, pregnancy, menopause, hysterectomy, bilateral oophorectomy, or age 25 years 
+total <- total %>%
+  mutate(time = pmin(age_depression, age_menopause, age_hysterectomy, age_oophorectomy, age_pregnancy, 25, na.rm = TRUE))
+
+# Check N participants with (age_depression == age_OC & <= time) OR age_depression == 0
+matching_ids <- total %>%
+  filter((age_depression == age_OC & age_depression <= time) | age_depression==0) %>%
+  pull(eid) # -> n=166 (n=165 will count as event while being no OC user and n=1 with age_depression == 0)
+
+# Remove participants with age_depression==age_OC (before they get censored) and 1 participant with age_depression == 0
+total <- total %>%
+  filter(!(eid %in% matching_ids))
+
+# Create new df with variables for final analyses
+final <- total[,c("eid", "OCuse", "depression", "source_depression", "age_OC", "time",             
+                  "yob", "deprivation", "age_menarche", "age_sexualdebut", "age_acne",
+                  "ovarydys", "endom", "dysmen",  
+                  "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "array",
+                  "age_depression", "age_menopause", "age_hysterectomy", "age_oophorectomy", "age_pregnancy")]
+
+# Save file with total pheno data
+write.csv(final, "pheno_final_data.csv")
+system("dx upload *pheno_final_data.csv")
+
+# Open file
+final <- read.delim("/mnt/project/Cohort/pheno_final_data.csv", header= T, sep = ",") # n=202,243
+
+# Add FID and IID for Plink
+final$FID <- final$eid
+final$IID <- final$eid
+# Save only columns FID and IID without header for Plink2
+keep.gwas <- final[,c("FID", "IID")]
+# Save file for plink
+write.table(keep.gwas, "keep.gwas.txt", append = FALSE, sep = " ", dec = ".", row.names = F, col.names = F)
+system("dx upload *keep.gwas.txt")
+
+####################################################################
+##            General characteristics and missingness             ##
+####################################################################
+install.packages("arsenal")
+library(arsenal)
+
+# Adjust OC and depression variable so that they are 0 if it occurs after censoring, but leave the rest of the variables as they are
+final2 <- final %>%
+  mutate(
+    depression = as.factor(case_when(!is.na(age_depression) ~ 1, TRUE ~ 0)), # 1 if age_depression is not NA, else 0
+    depression_censor = as.factor(case_when(age_depression <= time ~ 1, TRUE ~ 0)), # depression to NA if age_depression <= time
+    age_depression_censor = ifelse(age_depression <= time, age_depression, NA), # age_depression to NA if age_depression <= time
+    source_depression_censor = ifelse(age_depression <= time, source_depression, NA_character_), # Depression source to NA if age_depression <= time
+    OCuse = as.factor(OCuse),
+    OCuse_censor = as.factor(case_when(OCuse ==1 & (age_OC <= time) ~ 1, TRUE ~ 0)), # OC use to NA if age_OC <= time
+    age_OC_censor = as.numeric(ifelse(age_OC <= time, age_OC, NA)), # Only keep age_OC if it occurs before or at censoring time
+    age_menarche_censor = as.numeric(ifelse(age_menarche <= time, age_menarche, NA)), # Only keep age_menarche if it occurs before or at censoring time
+    age_sexualdebut_censor = as.numeric(ifelse(age_sexualdebut <= time, age_sexualdebut, NA)), # Only keep age_sexualdebut if it occurs before or at censoring time
+    age_sexualdebut_cont = as.numeric(ifelse(age_sexualdebut == "Never had sex", NA, age_sexualdebut)), # Set 'never had sex' to NA
+    age_acne_censor = as.numeric(ifelse(age_acne <= time, age_acne, NA)), # Only keep age_acne if it occurs before or at censoring time
+    ovarydys = as.character(ovarydys),
+    endom = as.character(endom),
+    dysmen = as.character(dysmen))
+
+df_table <- final2[,c("depression", "source_depression", "age_depression", "OCuse", "age_OC", # original exposure and outcome
+                      "age_menarche", "age_sexualdebut", "age_sexualdebut_cont", "age_acne", # original timevarying covariates
+                      "depression_censor", "source_depression_censor", "age_depression_censor",   # censored outcome
+                      "OCuse_censor", "age_OC_censor",                                            # censored exposure
+                      "age_menarche_censor", "age_sexualdebut_censor", "age_acne_censor",         # censored timevarying covariates
+                      "yob", "deprivation", "ovarydys", "endom", "dysmen",                        # fixed covariates
+                      "age_menopause", "age_hysterectomy", "age_oophorectomy", "age_pregnancy", "time")]  # censoring indicator variables
+
+
+# Set the variables and control options
+my_controls <- list(test = TRUE, total = TRUE, numeric.stats = c("meansd", "N", "Nmiss", "median", "range"), cat.stats = c("countpct", "N", "Nmiss"), digits = 2)
+
+# Generate a general characteristics table using tableby
+# Divide by all OC users
+table_one <- tableby(OCuse ~ ., data= df_table, control = my_controls)
+summary(table_one)
+# Save the table to a Word document
+write2word(table_one, "table_one_byOC.docx")
+
+# Divide by OC use before censoring
+table_one_censor <- tableby(OCuse_censor ~ ., data= df_table, control = my_controls)
+summary(table_one_censor)
+# Save the table to a Word document
+write2word(table_one_censor, "table_one_byOC_censor.docx")
+
+
+####################################################################
+##                        Single imputations                      ##
+####################################################################
+install.packages("missMDA")
+library(missMDA) #For PCA based imputation
+
+# Check data
+str(final)
+
+# Make all categorical variables factor
+col_names <- c("OCuse", "depression", "ovarydys", "endom", "dysmen", "array")
+final <- final %>%
+  mutate(across(all_of(col_names), as.factor))
+
+# Set 'never had sex' to age 70 for age at sexual debut
+final$age_sexualdebut <- as.numeric(ifelse(final$age_sexualdebut == "Never had sex", 70, final$age_sexualdebut))
+
+# Make all continuous variables numeric
+final <- final %>% mutate_if(is.integer,as.numeric)
+
+# Variables to be included in imputation
+variable_names <- c("OCuse", "depression", "time", "yob", "deprivation",
+                    "age_menarche", "age_sexualdebut", "ovarydys", "endom", "dysmen",
+                    "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "array")
+
+# Maximum number of PCs, which can be fitted (number of variables - 1)
+ncp.max <- length(variable_names)-1 # 18
+
+# Use Kfold cross-validation to determine optimum number of components (max 10 simulations)
+set.seed(20250414)
+nb <- estim_ncpFAMD(final[,variable_names], nbsim = 10, ncp.max = ncp.max)
+nb$ncp # 18
+
+# Make elbow plot
+pdf("elbow.pdf", width = 8, height = 6)
+plot(0:18, nb$criterion, xlab = "Number of components", ylab = "Mean square error of prediction")
+dev.off()
+
+# Perform PCA based imputation using the optimum number of components determined by CV
+set.seed(20250414)
+final.impute <- imputeFAMD(final[,variable_names], ncp = 18) 
+
+# Recover the IDs, age_OC, age_depression, etc which were not included in imputation
+imputed.data <- as.data.frame(final.impute$completeObs)
+imputed.data <- cbind(final[c("eid", "age_OC", "age_depression", "age_acne", "age_pregnancy", "age_menopause", "age_hysterectomy", "age_oophorectomy")],imputed.data)
+
+# Compare associations with and without imputation
+summary(glm(depression ~ deprivation + age_menarche + age_sexualdebut, data = final, family = "binomial"))
+summary(glm(depression ~ deprivation + age_menarche + age_sexualdebut, data = imputed.data, family = "binomial"))
+
+str(imputed.data)
+
+# Clean variable values
+imputed.data <- imputed.data %>%
+  mutate(
+    OCuse = case_when(
+      OCuse == "OCuse_0" ~ 0,
+      OCuse == "OCuse_1" ~ 1),
+    depression = case_when(
+      depression == "depression_1" ~ 1,
+      depression == "depression_0" ~ 0),
+    ovarydys = case_when(
+      ovarydys == "ovarydys_0" ~ 0,
+      ovarydys == "ovarydys_1" ~ 1),
+    endom = case_when(
+      endom == "endom_0" ~ 0,
+      endom == "endom_1" ~ 1),
+    dysmen = case_when(
+      dysmen == "dysmen_0" ~ 0,
+      dysmen == "dysmen_1" ~ 1),
+    array = case_when(
+      array == "array_1" ~ 1,
+      array == "array_0" ~ 0))
+
+
+imputed.data <- imputed.data[,c("eid", "OCuse", "age_OC", "depression", "age_depression",
+                                "time", "age_menopause", "age_hysterectomy", "age_oophorectomy",
+                                "yob", "deprivation", "age_menarche", "age_sexualdebut", "age_acne", 
+                                "ovarydys", "endom", "dysmen", 
+                                "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "array")]
+# Save imputed file
+write.csv(imputed.data, "pheno_final_imputed.csv")
+system("dx upload *pheno_final_imputed.csv")
+
+# Open file
+imputed.data <- read.delim("/mnt/project/Cohort/pheno_final_imputed.csv", header= T, sep = ",") # n=202,243
+
+
+####################################################################################
+##     Create time varying data file for cox model with timevarying factors       ##
+####################################################################################
+library(survival)
+library(tidyr)
+library(dplyr)
+
+### Create dataset for survival analyses
+df.cox <- tmerge(data1 = imputed.data,
+                 data2 = imputed.data,
+                 id = eid,
+                 tstop = time,
+                 event = event(age_depression),
+                 menar = tdc(age_menarche),
+                 sex = tdc(age_sexualdebut),
+                 acne = tdc(age_acne),
+                 OCstart = tdc(age_OC))
+
+## Check number of events and potential mistakes
+check <- survcheck(formula = Surv(as.numeric(tstart), as.numeric(tstop), as.numeric(event)) ~ 1, data = df.cox, id = eid)
+check # n=202243 individuals, n=2067 events
+check$flag # no flags
+
+# Check number of events for OC users vs non-users
+tapply(X = df.cox$event, INDEX = df.cox$OCstart, FUN = sum, na.rm = TRUE) # n=726 for OC users, and n=1341 for never users
+
+# Check number of events for OC users vs non-users
+table(df.cox$OCstart) # 
+
+# Calculate person years
+sum(df.cox$tstop - df.cox$tstart) # 4710057 person-years in total
+# Calculate person years for OC users vs non-users
+tapply(df.cox$tstop - df.cox$tstart, df.cox$OCstart, sum, na.rm = TRUE) # 536163 for OC users, and 4173894 for never users 
+
+# View the transition count table
+attr(df.cox, "tcount") # n=28444 censored as 'no event' (late); n=2067 events (trailing)
+
+# View first 60 rows
+head(df.cox[,c("eid", "tstart", "tstop", "OCstart", "menar", "sex", "acne", "event")], 60)
+
+# Save imputed file
+write.csv(df.cox, "pheno_final_imputed_cox.csv")
+system("dx upload *pheno_final_imputed_cox.csv")
+
+# Open file
+df.cox <- read.delim("/mnt/project/Cohort/pheno_final_imputed_cox.csv", header= T, sep = ",") # n=203,256
+
+####################################################################################
+#                       Analyses for ever use vs never use                         #
+####################################################################################
+install.packages("survminer")
+library(survminer)
+
+# Fit survival curves using your cox model
+fit_surv <- survfit(Surv(as.numeric(tstart), as.numeric(tstop), as.numeric(event)) ~ factor(OCstart) + cluster(eid), 
+                    data = df.cox)
+
+# Create survival table
+fit_summary <- summary(fit_surv)
+surv_df <- data.frame(
+  time = fit_summary$time,
+  n_risk = fit_summary$n.risk,
+  n_censor = fit_summary$n.censor,
+  n_event = fit_summary$n.event,
+  survival = fit_summary$surv,
+  lower_ci = fit_summary$lower,
+  upper_ci = fit_summary$upper)
+
+install.packages("writexl")
+library(writexl)
+write_xlsx(surv_df, "survival_table_OC.xlsx")
+
+# Run unadjusted cox model
+fit_unadj <- coxph(Surv(as.numeric(tstart), as.numeric(tstop), as.numeric(event)) ~ factor(OCstart) + cluster(eid), 
+                   data = df.cox)
+summary(fit_unadj)
+
+# Run adjusted cox model
+fit_adj <- coxph(Surv(as.numeric(tstart), as.numeric(tstop), as.numeric(event)) ~ factor(OCstart) + yob + deprivation + menar + sex + acne + ovarydys + endom + dysmen + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + array + cluster(eid), data = df.cox)
+summary(fit_adj)
+
+# ---- Function to tidy results ----
+install.packages("broom")
+library(broom)
+install.packages("writexl")
+library(writexl)
+
+extract_results <- function(model, model_name) {
+  tidy(model, exponentiate = TRUE, conf.int = TRUE) %>%
+    select(term, estimate, conf.low, conf.high, p.value) %>%
+    rename(
+      HR = estimate,
+      `p-value` = p.value,
+      CI_lower = conf.low,
+      CI_upper = conf.high
+    ) %>%
+    mutate(model = model_name) %>%
+    relocate(model, .before = term) %>%
+    mutate(across(where(is.numeric), ~round(., 3)))
+}
+
+# ---- Apply to all models ----
+res_unadj <- extract_results(fit_unadj, "Unadjusted")
+res_adj   <- extract_results(fit_adj, "Adjusted")
+
+# ---- Combine into one data frame ----
+all_results <- bind_rows(res_unadj, res_adj)
+
+# ---- Write to Excel ----
+write_xlsx(all_results, "cox_models_results.xlsx")

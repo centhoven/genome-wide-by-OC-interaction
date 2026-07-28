@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# This script converts PLINK format (pgen) to bed/bim/fam files using plink2, filters on eids in the cohort, include only variants with 'FILTER' is 'PASS' (keep.snps, see script "Extract-snps-FILTER=PASS"), MAC < 25, Hardy-Weinberg equilibrium test P < 1e-100, missingness rate > 0.1, MAF 5%, and only include SNPs.
+
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+wgs_file_dir="${project}:/Bulk/DRAGEN WGS/DRAGEN population level WGS variants, PLINK format [500k release]/"
+wgs_dir="/Bulk/DRAGEN WGS/DRAGEN population level WGS variants, PLINK format [500k release]/"
+data_file_dir="${project}:/Data/"
+txt_file_dir="${project}:/Cohort/"
+
+run_plink_wgs="
+plink2 \
+  --pfile '/mnt/project/Bulk/DRAGEN WGS/DRAGEN population level WGS variants, PLINK format [500k release]/ukb24308_cX_b0_v1' \
+  --keep /mnt/project/Cohort/keep.gwas.txt \
+  --mac 25 \
+  --hwe 1e-100 midp \
+  --geno 0.1 \
+  --maf 0.05 \
+  --snps-only just-acgt \
+  --extract /mnt/project/Data/keep.snps23.txt \
+  --make-bed \
+  --no-pheno \
+  --out chr23_251031"
+
+dx run swiss-army-knife \
+  -iin="${wgs_file_dir}ukb24308_cX_b0_v1.pvar" \
+  -iin="${txt_file_dir}/keep.gwas.txt" \
+  -iin="${data_file_dir}/keep.snps23.txt" \
+  -icmd="${run_plink_wgs}" \
+  --instance-type "mem3_ssd1_v2_x64" \
+  --priority high \
+  --destination="${data_file_dir}" \
+  --brief --yes
+
+
+for i in {1..22}; do
+run_plink_wgs="
+plink2 \
+  --pfile '/mnt/project/Bulk/DRAGEN WGS/DRAGEN population level WGS variants, PLINK format [500k release]/ukb24308_c${i}_b0_v1' \
+  --keep /mnt/project/Cohort/keep.gwas.txt \
+  --mac 25 \
+  --hwe 1e-100 midp \
+  --geno 0.1 \
+  --maf 0.05 \
+  --snps-only just-acgt \
+  --extract /mnt/project/Data/keep.snps${i}.txt \
+  --make-bed \
+  --no-pheno \
+  --out chr${i}_251031"
+
+dx run swiss-army-knife \
+  -iin="${wgs_file_dir}ukb24308_c${i}_b0_v1.pvar" \
+  -iin="${txt_file_dir}/keep.gwas.txt" \
+  -iin="${data_file_dir}/keep.snps${i}.txt" \
+  -icmd="${run_plink_wgs}" \
+  --instance-type "mem3_ssd1_v2_x64" \
+  --priority high \
+  --destination="${data_file_dir}" \
+  --brief --yes
+done

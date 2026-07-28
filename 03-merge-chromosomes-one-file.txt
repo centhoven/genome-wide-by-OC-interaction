@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# This script merges the files resulting from '02-QC-variants' into one file, and filters on sample call rate 0.02.
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+
+# Create merge list file (locally)
+merge_list="tomerge_251107.txt"
+echo "Creating merge list: ${merge_list}"
+
+for chr in {22..23}; do
+  echo "/mnt/project/Data/chr${chr}_251031.bed /mnt/project/Data/chr${chr}_251031.bim /mnt/project/Data/chr${chr}_251031.fam" >> ${merge_list}
+done
+
+# Upload merge list to your project
+dx upload "${merge_list}" --destination="${data_file_dir}" --brief
+
+run_merge="
+plink \
+  --merge-list /mnt/project/Data/${merge_list} \
+  --allow-extra-chr \
+  --mind 0.02 \
+  --make-bed \
+  --out all_chr_merged_251110"
+
+dx run swiss-army-knife \
+  -iin="${data_file_dir}/${merge_list}" \
+  -icmd="${run_merge}" \
+  --instance-type "mem3_ssd1_v2_x64" \
+  --destination="${data_file_dir}" \
+  --priority high \
+  --brief --yes
+
+# No participants were excluded because of the sample call rate, therefore I continue with the snps per chromosome

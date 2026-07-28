@@ -1,0 +1,31 @@
+# This script uses pruning on LD to decrease the total number of snps with 
+
+#!/bin/bash
+
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+data_file_dir="${project}:/Data/"
+
+for i in {1..23}; do
+run_plink_pruning="
+plink2 \
+  --bfile '/mnt/project/Data/chr${i}_251031' \
+  --indep-pairwise 200kb 0.5 \
+  --out chr${i}_251031_prune;
+
+plink2 \
+  --bfile '/mnt/project/Data/chr${i}_251031' \
+  --extract chr${i}_251031_prune.prune.in \
+  --make-bed \
+  --no-pheno \
+  --out chr${i}_251031_pruned"
+
+dx run swiss-army-knife \
+  -iin="${data_file_dir}/chr${i}_251031.bed" \
+  -iin="${data_file_dir}/chr${i}_251031.fam" \
+  -iin="${data_file_dir}/chr${i}_251031.bim" \
+  -icmd="${run_plink_pruning}" \
+  --instance-type "mem3_ssd1_v2_x4" \
+  --priority high \
+  --destination="${data_file_dir}" \
+  --brief --yes
+done

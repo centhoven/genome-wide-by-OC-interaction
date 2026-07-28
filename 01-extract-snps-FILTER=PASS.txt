@@ -1,0 +1,26 @@
+project="project-GyK0Y6jJ03qkb5JQBF041Yfx"
+wgs_file_dir="/Bulk/DRAGEN WGS/DRAGEN population level WGS variants, PLINK format [500k release]/"
+data_field="ukb24308"
+data_file_dir="${project}:/Data/"
+
+run_filter_pass="awk 'NR>1 && \$7==\"PASS\" {print \$3}' ${data_field}_cX_b0_v1.pvar > keep.snps23.txt"
+
+dx run swiss-army-knife \
+  -iin="${wgs_file_dir}/${data_field}_cX_b0_v1.pvar" \
+  -icmd="${run_filter_pass}" \
+  --destination="${data_file_dir}" \
+  --instance-type "mem1_ssd1_v2_x8" \
+  --priority high \
+  --brief --yes
+
+for i in {1..22}; do
+run_filter_pass="awk 'NR>1 && \$7==\"PASS\" {print \$3}' ${data_field}_c${i}_b0_v1.pvar > keep.snps${i}.txt"
+
+dx run swiss-army-knife \
+  -iin="${wgs_file_dir}/${data_field}_c${i}_b0_v1.pvar" \
+  -icmd="${run_filter_pass}" \
+  --destination="${data_file_dir}" \
+  --instance-type "mem3_ssd1_v2_x8" \
+  --priority high \
+  --brief --yes
+done
