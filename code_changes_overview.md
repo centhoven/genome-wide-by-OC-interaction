@@ -2,8 +2,7 @@
 
 This document describes all manual changes made to the source code of `CBIIT/ldsc` and
 `qlu-lab/PIGEON`, needed to get both tools working on Windows with more recent versions of
-`bitarray` and `pandas`. Keep this file so you can reproduce these changes on a fresh clone,
-or share it with others using the same tools.
+`bitarray` and `pandas`.
 
 ---
 
@@ -106,36 +105,12 @@ delim_whitespace=True
 sep=r'\s+'
 ```
 
-### 7. `pigeon.py` — missing `type=float` on liability-scale flags
+### 7. `ldsc_mod/sumstats.py` — typos in `_get_....._table`
 
-**Problem:** `--samp-prev` and `--pop-prev` were passed through as text (string) instead of
-a number, which later caused a `TypeError` in `np.isnan()`.
+**Problem:** four typos (it instead of i)
 
-**Lines 103-106:**
-
-```python
-# Was:
-parser.add_argument('--samp-prev', default=None,
-    help='Sample prevalence of binary phenotype (for conversion to liability scale).')
-parser.add_argument('--pop-prev', default=None,
-    help='Population prevalence of binary phenotype (for conversion to liability scale).')
-
-# Becomes:
-parser.add_argument('--samp-prev', default=None, type=float,
-    help='Sample prevalence of binary phenotype (for conversion to liability scale).')
-parser.add_argument('--pop-prev', default=None, type=float,
-    help='Population prevalence of binary phenotype (for conversion to liability scale).')
-```
-
-### 8. `ldsc_mod/sumstats.py` — bug in `_get_GxE_var_table`
-
-**Problem:** this function incorrectly assumed `args.samp_prev`/`args.pop_prev` were lists
-(`for i in args.samp_prev`), whereas after fix #7 they are single numbers
-(`TypeError: 'float' object is not iterable`). The original code also contained a substantive
-error: the p-value was multiplied by the liability-scale scaling factor, which is not
-statistically correct (a p-value does not change when an estimate is rescaled).
-
-**In the `_get_GxE_var_table` function, the `if` block right after `x['gxe_sumstats'] = [args.gxe_sumstats]`:**
+**Two locations** in the file (lines 609, 664, 728 and 765 contain the same call
+and were all fixed the same way:
 
 ```python
 # Was:
@@ -143,25 +118,10 @@ if args.samp_prev is not None and \
         args.pop_prev is not None and \
         all((i is not None for i in args.samp_prev)) and \
         all((i is not None for it in args.pop_prev)):
-    c = list(map(lambda x, y: reg.h2_obs_to_liab(1, x, y), args.samp_prev[1:], args.pop_prev[1:]))
-    x['h2_gxe_liab'] = list(map(lambda x, y: x * y, c, [hsq.tot]))
-    x['h2_gxe_liab_se'] = list(map(lambda x, y: x * y, c, [hsq.tot_se]))
-    x['h2_gxe_liab_p'] = list(map(lambda x, y: x * y, c, [hsq.p]))
-    x['h2_gxe_liab_int'] = list(map(lambda x, y: x * y, c, [hsq.intercept]))
-    x['h2_gxe_liab_int_se'] = list(map(lambda x, y: x * y, c, [hsq.intercept_se]))
-    x['h2_gxe_liab_int_p'] = list(map(lambda x, y: x * y, c, [hsq.intercept_p]))
-    x = x.sort_values(by=['h2_gxe_liab_p'], na_position='last')
 
 # Becomes:
-if args.samp_prev is not None and args.pop_prev is not None:
-    c = reg.h2_obs_to_liab(1, args.samp_prev, args.pop_prev)
-    x['h2_gxe_liab'] = [hsq.tot * c]
-    x['h2_gxe_liab_se'] = [hsq.tot_se * c]
-    x['h2_gxe_liab_p'] = [hsq.p]
-    x['h2_gxe_liab_int'] = [hsq.intercept]
-    x['h2_gxe_liab_int_se'] = [hsq.intercept_se]
-    x['h2_gxe_liab_int_p'] = [hsq.intercept_p]
-    x = x.sort_values(by=['h2_gxe_liab_p'], na_position='last')
+if args.samp_prev is not None and \
+        args.pop_prev is not None and \
+        all((i is not None for i in args.samp_prev)) and \
+        all((i is not None for i in args.pop_prev)):
 ```
-
-The `else` branch of this function (observed-scale output) was left unchanged.
