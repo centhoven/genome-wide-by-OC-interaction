@@ -63,8 +63,8 @@ git clone https://github.com/qlu-lab/PIGEON
 
 python PIGEON\munge_sumstats.py --sumstats sumstats_gwdis_ldsc.txt --snp SNP --a1 A1 --a2 A2 --p P --signed-sumstats BETA,0 --N-con-col N_CON --N-cas-col N_CAS --merge-alleles gwdis_merge_alleles.txt --out gwdis_munged
 
-# 10 estimate de genexOC component
+# 10 estimate the genexOC variance component and the oracle polygenic score-by-OC-interaction
 
-python PIGEON\pigeon.py --gxe-var --gxe-sumstats gwdis_munged.sumstats.gz --ref-ld-chr eur_ldscores. --w-ld-chr eur_ldscores. --pop-prev 0.1 --samp-prev 0.01 --out SNPxOC_depression_h2
+python PIGEON\pigeon.py --scan --gxe-sumstats gwdis_munged.sumstats.gz --gwas-sumstats depression.sumstats.gz --ref-ld-chr eur_ldscores. --w-ld-chr eur_ldscores. --e-sd 0.49 --pop-prev 0.1,0.1 --samp-prev 0.01,0.01 --out oracle_GxOC
 
 # 11 NOTE: some adjustments were done in the original codes due to different software versions, see "code_changes_overview.md"
